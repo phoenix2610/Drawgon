@@ -104,6 +104,7 @@ export function BoardCanvas({
         }
         colorScheme={theme}
         onMount={handleMount}
+        licenseKey={import.meta.env.VITE_TLDRAW_LICENSE_KEY}
       >
         <PdfImporter readOnly={readOnly} />
       </Tldraw>

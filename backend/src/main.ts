@@ -26,6 +26,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const port = configService.get<string>('PORT') ?? '3000';
-  await app.listen(port);
+  // Render, Railway and Fly route traffic to the container's external
+  // interface; binding the default loopback would make the health check fail.
+  await app.listen(port, '0.0.0.0');
 }
 void bootstrap();

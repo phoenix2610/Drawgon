@@ -1,0 +1,108 @@
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { BoardPage } from '@/pages/BoardPage';
+import { LoginPage } from '@/pages/LoginPage';
+import { SignupPage } from '@/pages/SignupPage';
+import { CommunityFeedPage } from '@/pages/CommunityFeedPage';
+import { CommunityBoardPage } from '@/pages/CommunityBoardPage';
+import { CommunitiesPage } from '@/pages/CommunitiesPage';
+import { CommunityPage } from '@/pages/CommunityPage';
+import { HealthCheckPage } from '@/pages/HealthCheckPage';
+import { HomePage } from '@/pages/HomePage';
+import { SavedPage } from '@/pages/SavedPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import { SettingsPage } from '@/pages/SettingsPage';
+import { AppShell } from '@/components/AppShell';
+import { ProtectedRoute } from '@/routes/ProtectedRoute';
+
+/** New screens render inside the persistent sidebar + header shell. */
+function shell(element: React.ReactNode) {
+  return (
+    <ProtectedRoute>
+      <AppShell>{element}</AppShell>
+    </ProtectedRoute>
+  );
+}
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: (
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/boards/:boardId',
+    element: (
+      <ProtectedRoute>
+        <BoardPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/community',
+    element: (
+      <ProtectedRoute>
+        <CommunityFeedPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/community/boards/:boardId',
+    element: (
+      <ProtectedRoute>
+        <CommunityBoardPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/communities',
+    element: (
+      <ProtectedRoute>
+        <CommunitiesPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/c/:slug',
+    element: (
+      <ProtectedRoute>
+        <CommunityPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/home',
+    element: shell(<HomePage />),
+  },
+  {
+    path: '/saved',
+    element: shell(<SavedPage />),
+  },
+  {
+    path: '/profile',
+    element: shell(<ProfilePage />),
+  },
+  {
+    path: '/settings',
+    element: shell(<SettingsPage />),
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    path: '/signup',
+    element: <SignupPage />,
+  },
+  {
+    path: '/debug/health',
+    element: <HealthCheckPage />,
+  },
+]);
+
+export function AppRouter() {
+  return <RouterProvider router={router} />;
+}

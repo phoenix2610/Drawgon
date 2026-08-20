@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+
+  /* Discord-blurple brand accent, used for primary actions and links */
+  --color-brand: #5865f2;
+  --color-brand-hover: #4752c4;
+
+  /* Reddit-style vote colors */
+  --color-upvote: #ff4500;
+  --color-downvote: #7193ff;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* --- Drawgon logo idle motion ---------------------------------------------
+   The logo is a static traced SVG, so loading states breathe rather than
+   draw themselves in. */
+
+@keyframes drawgon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 0.72;
+    transform: translateY(-4px) scale(1.02);
+  }
+}
+
+.drawgon-pulse {
+  animation: drawgon-pulse 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawgon-pulse {
+    animation: none;
+  }
+}

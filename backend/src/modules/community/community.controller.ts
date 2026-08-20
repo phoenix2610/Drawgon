@@ -1,0 +1,28 @@
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
+import { CommunityService } from './community.service';
+
+@Controller('community/boards')
+export class CommunityController {
+  constructor(private readonly communityService: CommunityService) {}
+
+  @Get()
+  listFeed(@Session() session: UserSession, @Query('q') q?: string) {
+    return this.communityService.listFeed(session.user.id, q);
+  }
+
+  @Get('saved')
+  listSaved(@Session() session: UserSession) {
+    return this.communityService.listSaved(session.user.id);
+  }
+
+  @Get(':id')
+  getBoard(@Param('id') id: string, @Session() session: UserSession) {
+    return this.communityService.getPublicBoardWithStats(id, session.user.id);
+  }
+
+  @Post(':id/duplicate')
+  duplicate(@Param('id') id: string, @Session() session: UserSession) {
+    return this.communityService.duplicateBoard(id, session.user.id);
+  }
+}

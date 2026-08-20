@@ -16,7 +16,20 @@ services:
 
     # The repository root is the build context so the backend workspace and
     # the shared/ + database/ sibling folders all resolve.
-    buildCommand: cd backend && npm ci && npm run build
+    # `--include=dev` is load-bearing: NODE_ENV=production below tells npm to
+    # skip devDependencies, but `nest` and `tsc-alias` live there, so a plain
+    # `npm ci` builds an install with no compiler and dies on
+    # `nest: command not found`.
+    #
+    # Clearing tsconfig.build.tsbuildinfo is load-bearing too: nest-cli.json
+    # sets deleteOutDir, so dist/ is wiped on every build, but a tsbuildinfo
+    # surviving in Render's build cache convinces tsc everything is already
+    # emitted. The build then "succeeds" while producing an empty dist/.
+    buildCommand: >-
+      cd backend &&
+      npm ci --include=dev &&
+      rm -rf dist tsconfig.build.tsbuildinfo &&
+      npm run build
     startCommand: cd backend && npm run start:prod
 
     # AppController's GET / runs `SELECT 1`, so a passing health check also

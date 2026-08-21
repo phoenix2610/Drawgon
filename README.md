@@ -303,9 +303,3 @@ The backend health check path is `GET /`, which also verifies the Postgres conne
 Production uses Supabase (PostgreSQL). The `ap-northeast-1` (Tokyo) region is used; the Render backend deploys to Singapore for the shortest database round-trip.
 
 ---
-
-## Known Gaps / In Progress
-
-- **tldraw watermark**: The free/non-commercial SDK tier shows a "Get a license for production" watermark in the canvas corner. Expected for an unlicensed deployment; harmless for a class demo.
-- **No Jest e2e test suite**: The in-process Nest bootstrap test was removed because `better-auth` ships ESM-only, which is incompatible with Jest's CommonJS module sandbox. Core business logic is covered by unit tests (`boards.service.spec.ts`); integration testing was done with Playwright against a real running server.
-- **Phases 3, 4, 6** (custom shapes, real-time sync, export) are not yet implemented. See `PROGRESS.md` for the full build log and phase-by-phase notes.

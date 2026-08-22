@@ -24,7 +24,7 @@
 
 ## Overview
 
-Drawgon (codename `ccwp`) is a collaborative canvas web platform where users can:
+Drawgon (codename `ccws`) is a community driven collaborative workspace where users can:
 
 - Create and edit infinite whiteboards powered by [tldraw](https://tldraw.dev)
 - Persist drawings in a PostgreSQL database (JSONB snapshot per board)

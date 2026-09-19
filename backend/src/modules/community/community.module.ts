@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Board } from '../../database/entities/board.entity';
+import { BoardCommunity } from '../../database/entities/board-community.entity';
 import { Vote } from '../../database/entities/vote.entity';
 import { Comment } from '../../database/entities/comment.entity';
 import { Bookmark } from '../../database/entities/bookmark.entity';
@@ -24,6 +25,7 @@ import { BookmarksService } from './bookmarks.service';
   imports: [
     TypeOrmModule.forFeature([
       Board,
+      BoardCommunity,
       Vote,
       Comment,
       Bookmark,

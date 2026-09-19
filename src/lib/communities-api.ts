@@ -49,10 +49,24 @@ export async function leaveCommunity(slug: string): Promise<CommunitySummary> {
   return res.data;
 }
 
+export async function deleteCommunity(slug: string): Promise<void> {
+  await apiClient.delete(`/communities/${slug}`);
+}
+
 export async function setBoardCommunity(
   boardId: string,
   slug: string | null,
 ): Promise<Board> {
   const res = await apiClient.put<Board>(`/boards/${boardId}/community`, { slug });
+  return res.data;
+}
+
+export async function setBoardCommunities(
+  boardId: string,
+  slugs: string[],
+): Promise<Board> {
+  const res = await apiClient.put<Board>(`/boards/${boardId}/communities`, {
+    slugs,
+  });
   return res.data;
 }

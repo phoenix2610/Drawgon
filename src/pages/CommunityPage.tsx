@@ -1,17 +1,18 @@
-import { ArrowLeft, Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import type { CommunitySummary, FeedItem } from '@shared/community';
+import { ArrowLeft, Sparkles, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import type { CommunitySummary, FeedItem } from "@shared/community";
 import {
   getCommunity,
+  deleteCommunity,
   joinCommunity,
   leaveCommunity,
   listCommunityBoards,
-} from '@/lib/communities-api';
-import { BoardCard } from '@/features/community/BoardCard';
-import { CommunityAvatar } from '@/features/community/CommunityAvatar';
-import { DrawgonLoader } from '@/components/DrawgonLoader';
-import { ThemeToggle } from '@/components/ThemeToggle';
+} from "@/lib/communities-api";
+import { BoardCard } from "@/features/community/BoardCard";
+import { CommunityAvatar } from "@/features/community/CommunityAvatar";
+import { DrawgonLoader } from "@/components/DrawgonLoader";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function CommunityPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -24,6 +25,8 @@ export function CommunityPage() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!slug) return;
@@ -33,7 +36,7 @@ export function CommunityPage() {
         if (!cancelled) setData({ slug, community, boards });
       })
       .catch(() => {
-        if (!cancelled) setError('Community not found.');
+        if (!cancelled) setError("Community not found.");
       });
     return () => {
       cancelled = true;
@@ -54,6 +57,19 @@ export function CommunityPage() {
       setData({ ...fresh, community: updated });
     } finally {
       setPending(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!community || deleting) return;
+    if (!window.confirm(`Delete d/${community.slug}? This cannot be undone.`))
+      return;
+    setDeleting(true);
+    try {
+      await deleteCommunity(community.slug);
+      navigate("/communities");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -96,8 +112,8 @@ export function CommunityPage() {
               d/{community.slug}
             </h1>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {community.name} · {community.memberCount}{' '}
-              {community.memberCount === 1 ? 'member' : 'members'}
+              {community.name} · {community.memberCount}{" "}
+              {community.memberCount === 1 ? "member" : "members"}
             </p>
             {community.description && (
               <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -105,23 +121,41 @@ export function CommunityPage() {
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => void toggleMembership()}
-            disabled={pending || community.role === 'owner'}
-            title={community.role === 'owner' ? 'You own this community' : undefined}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${
-              community.joined
-                ? 'border border-neutral-300 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800'
-                : 'bg-brand text-white hover:bg-brand-hover'
-            }`}
-          >
-            {community.role === 'owner'
-              ? 'Owner'
-              : community.joined
-                ? 'Joined'
-                : 'Join'}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {community.role === "owner" && (
+              <button
+                type="button"
+                onClick={() => void handleDelete()}
+                disabled={deleting}
+                aria-label="Delete community"
+                title="Delete community"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition hover:bg-red-100 hover:text-red-600 disabled:opacity-50 dark:text-neutral-500 dark:hover:bg-red-500/15 dark:hover:text-red-400"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void toggleMembership()}
+              disabled={pending || community.role === "owner" || deleting}
+              title={
+                community.role === "owner"
+                  ? "You own this community"
+                  : undefined
+              }
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${
+                community.joined
+                  ? "border border-neutral-300 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  : "bg-brand text-white hover:bg-brand-hover"
+              }`}
+            >
+              {community.role === "owner"
+                ? "Owner"
+                : community.joined
+                  ? "Joined"
+                  : "Join"}
+            </button>
+          </div>
         </header>
 
         {boards.length === 0 && (

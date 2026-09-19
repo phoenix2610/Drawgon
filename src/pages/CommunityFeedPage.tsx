@@ -1,17 +1,17 @@
-import { Hash, LayoutGrid, Search, Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import type { FeedItem } from '@shared/community';
-import { listCommunityFeed } from '@/lib/community-api';
-import { PinCard } from '@/features/community/PinCard';
-import { DrawgonLoader } from '@/components/DrawgonLoader';
-import { DrawgonWordmark } from '@/components/DrawgonWordmark';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Hash, LayoutGrid, Search, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import type { FeedItem } from "@shared/community";
+import { listCommunityFeed } from "@/lib/community-api";
+import { PinCard } from "@/features/community/PinCard";
+import { DrawgonLoader } from "@/components/DrawgonLoader";
+import { DrawgonWordmark } from "@/components/DrawgonWordmark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function CommunityFeedPage() {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
 
   // Debounced so typing doesn't fire a request per keystroke.
   useEffect(() => {
@@ -25,7 +25,7 @@ export function CommunityFeedPage() {
   }, [query]);
 
   const navLink =
-    'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-200/70 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50';
+    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-200/70 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50";
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
@@ -53,7 +53,7 @@ export function CommunityFeedPage() {
           <div className="order-2 flex items-center gap-1 sm:order-3">
             <Link to="/communities" className={navLink}>
               <Hash size={15} />
-              Communities
+              wa Communities
             </Link>
             <Link to="/" className={navLink}>
               <LayoutGrid size={15} />
@@ -71,7 +71,7 @@ export function CommunityFeedPage() {
             <p className="text-neutral-500">
               {query
                 ? `No boards match "${query}".`
-                : 'No public boards yet. Publish one of yours to be the first.'}
+                : "No public boards yet. Publish one of yours to be the first."}
             </p>
           </div>
         )}

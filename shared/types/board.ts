@@ -1,9 +1,20 @@
 export type BoardVisibility = 'private' | 'public';
 
+export interface BoardPostMedia {
+  name: string;
+  type: string;
+  url: string;
+}
+
 export interface BoardSummary {
   id: string;
   ownerId: string;
   title: string;
+  publishedFromId: string | null;
+  postTitle: string | null;
+  postDetails: string | null;
+  postTags: string[];
+  postMedia: BoardPostMedia[];
   visibility: BoardVisibility;
   /** Community the board is filed under, or null when unfiled. */
   communityId: string | null;

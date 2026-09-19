@@ -1,6 +1,11 @@
 export interface FeedItem {
   id: string;
   title: string;
+  boardTitle: string;
+  postTitle: string | null;
+  postDetails: string | null;
+  postTags: string[];
+  postMedia: { name: string; type: string; url: string }[];
   ownerId: string;
   ownerName: string;
   thumbnailUrl: string | null;

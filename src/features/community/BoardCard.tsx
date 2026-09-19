@@ -1,13 +1,16 @@
-import { Bookmark, MessageSquare } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import type { FeedItem } from '@shared/community';
-import { VoteButtons } from './VoteButtons';
-import { Avatar } from '@/components/Avatar';
-import { addBookmark, removeBookmark } from '@/lib/community-api';
+import { Bookmark, MessageSquare } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import type { FeedItem } from "@shared/community";
+import { VoteButtons } from "./VoteButtons";
+import { Avatar } from "@/components/Avatar";
+import { addBookmark, removeBookmark } from "@/lib/community-api";
 
 export function BoardCard({ item }: { item: FeedItem }) {
-  const [stats, setStats] = useState({ score: item.score, myVote: item.myVote });
+  const [stats, setStats] = useState({
+    score: item.score,
+    myVote: item.myVote,
+  });
   const [bookmarked, setBookmarked] = useState(item.bookmarked);
   const [bookmarkPending, setBookmarkPending] = useState(false);
 
@@ -52,9 +55,14 @@ export function BoardCard({ item }: { item: FeedItem }) {
         <p className="truncate font-semibold text-neutral-900 group-hover:text-brand dark:text-neutral-50">
           {item.title}
         </p>
+        {item.postDetails && (
+          <p className="mt-1 line-clamp-2 text-xs text-neutral-500 dark:text-neutral-400">
+            {item.postDetails}
+          </p>
+        )}
         <div className="mt-2 flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
           <MessageSquare size={14} />
-          {item.commentCount} {item.commentCount === 1 ? 'comment' : 'comments'}
+          {item.commentCount} {item.commentCount === 1 ? "comment" : "comments"}
         </div>
       </div>
 
@@ -72,14 +80,14 @@ export function BoardCard({ item }: { item: FeedItem }) {
         onClick={(e) => void toggleBookmark(e)}
         disabled={bookmarkPending}
         aria-pressed={bookmarked}
-        title={bookmarked ? 'Remove bookmark' : 'Bookmark'}
+        title={bookmarked ? "Remove bookmark" : "Bookmark"}
         className={`shrink-0 rounded-full p-1.5 transition ${
           bookmarked
-            ? 'text-amber-500'
-            : 'text-neutral-300 hover:bg-neutral-100 hover:text-neutral-500 dark:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-400'
+            ? "text-amber-500"
+            : "text-neutral-300 hover:bg-neutral-100 hover:text-neutral-500 dark:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-400"
         }`}
       >
-        <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} />
+        <Bookmark size={18} fill={bookmarked ? "currentColor" : "none"} />
       </button>
     </Link>
   );

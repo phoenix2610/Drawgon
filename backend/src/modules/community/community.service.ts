@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, In, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Board, BoardVisibility } from '../../database/entities/board.entity';
 import { VotesService } from './votes.service';
 import { CommentsService } from './comments.service';
@@ -9,6 +9,11 @@ import { BookmarksService } from './bookmarks.service';
 export interface FeedItem {
   id: string;
   title: string;
+  boardTitle: string;
+  postTitle: string | null;
+  postDetails: string | null;
+  postTags: string[];
+  postMedia: { name: string; type: string; url: string }[];
   ownerId: string;
   ownerName: string;
   thumbnailUrl: string | null;
@@ -38,14 +43,23 @@ export class CommunityService {
 
   async listFeed(currentUserId: string, query?: string): Promise<FeedItem[]> {
     const term = query?.trim();
-    const boards = await this.boardsRepository.find({
-      where: {
+    const boards = await this.boardsRepository
+      .createQueryBuilder('board')
+      .leftJoinAndSelect('board.owner', 'owner')
+      .where('board.visibility = :visibility', {
         visibility: BoardVisibility.PUBLIC,
-        ...(term ? { title: ILike(`%${term}%`) } : {}),
-      },
-      relations: { owner: true },
-      order: { updatedAt: 'DESC' },
-    });
+      })
+      .andWhere(
+        '(board.published_from_id IS NOT NULL OR board.community_id IS NOT NULL)',
+      )
+      .andWhere(
+        term
+          ? '(board.title ILIKE :term OR board.post_title ILIKE :term OR board.post_details ILIKE :term)'
+          : '1 = 1',
+        term ? { term: `%${term}%` } : {},
+      )
+      .orderBy('board.updated_at', 'DESC')
+      .getMany();
     return this.enrichBoards(boards, currentUserId);
   }
 
@@ -126,7 +140,12 @@ export class CommunityService {
 
     return boards.map((board) => ({
       id: board.id,
-      title: board.title,
+      title: board.postTitle || board.title,
+      boardTitle: board.title,
+      postTitle: board.postTitle,
+      postDetails: board.postDetails,
+      postTags: board.postTags ?? [],
+      postMedia: board.postMedia ?? [],
       ownerId: board.ownerId,
       ownerName: board.owner?.name ?? 'Unknown',
       thumbnailUrl: board.thumbnailUrl,

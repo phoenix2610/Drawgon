@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, In, Repository } from 'typeorm';
 import { Board, BoardVisibility } from '../../database/entities/board.entity';
+import { BoardCommunity } from '../../database/entities/board-community.entity';
 import { Community } from '../../database/entities/community.entity';
 import {
   CommunityMember,
@@ -53,6 +54,8 @@ export class CommunitiesService {
     private readonly membersRepository: Repository<CommunityMember>,
     @InjectRepository(Board)
     private readonly boardsRepository: Repository<Board>,
+    @InjectRepository(BoardCommunity)
+    private readonly boardCommunitiesRepository: Repository<BoardCommunity>,
     private readonly communityService: CommunityService,
   ) {}
 
@@ -178,17 +181,36 @@ export class CommunitiesService {
     return summary;
   }
 
+  async remove(slug: string, currentUserId: string): Promise<void> {
+    const community = await this.findBySlugOrFail(slug);
+    const membership = await this.membersRepository.findOneBy({
+      communityId: community.id,
+      userId: currentUserId,
+    });
+
+    if (membership?.role !== CommunityRole.OWNER) {
+      throw new ForbiddenException('Only the community owner can delete it.');
+    }
+
+    await this.communitiesRepository.remove(community);
+  }
+
   /** Public boards posted to this community, newest first. */
   async listBoards(slug: string, currentUserId: string): Promise<FeedItem[]> {
     const community = await this.findBySlugOrFail(slug);
-    const boards = await this.boardsRepository.find({
-      where: {
-        communityId: community.id,
+    const boards = await this.boardsRepository
+      .createQueryBuilder('board')
+      .leftJoin('board_communities', 'boardCommunity', 'boardCommunity.board_id = board.id')
+      .leftJoinAndSelect('board.owner', 'owner')
+      .where('board.visibility = :visibility', {
         visibility: BoardVisibility.PUBLIC,
-      },
-      relations: { owner: true },
-      order: { updatedAt: 'DESC' },
-    });
+      })
+      .andWhere(
+        '(board.community_id = :communityId OR boardCommunity.community_id = :communityId)',
+        { communityId: community.id },
+      )
+      .orderBy('board.updated_at', 'DESC')
+      .getMany();
     return this.communityService.enrichBoards(boards, currentUserId);
   }
 
@@ -229,6 +251,37 @@ export class CommunitiesService {
     return this.boardsRepository.save(board);
   }
 
+  async setBoardCommunities(
+    boardId: string,
+    ownerId: string,
+    slugs: string[],
+  ): Promise<Board> {
+    const board = await this.boardsRepository.findOneBy({ id: boardId, ownerId });
+    if (!board) {
+      throw new NotFoundException(`Board ${boardId} not found`);
+    }
+
+    const uniqueSlugs = [...new Set(slugs.map((slug) => slug.trim().toLowerCase()))];
+    const communities = await Promise.all(
+      uniqueSlugs.map((slug) => this.findBySlugOrFail(slug)),
+    );
+    for (const community of communities) {
+      const membership = await this.membersRepository.findOneBy({
+        communityId: community.id,
+        userId: ownerId,
+      });
+      if (!membership) {
+        throw new ForbiddenException(
+          `Join d/${community.slug} before posting to it.`,
+        );
+      }
+    }
+
+    board.communityId = communities[0]?.id ?? null;
+    board.communities = communities;
+    return this.boardsRepository.save(board);
+  }
+
   private async findBySlugOrFail(slug: string): Promise<Community> {
     const community = await this.communitiesRepository.findOneBy({
       slug: slug.toLowerCase(),
@@ -254,16 +307,21 @@ export class CommunitiesService {
         .where('m.community_id IN (:...ids)', { ids })
         .groupBy('m.community_id')
         .getRawMany<{ communityId: string; count: string }>(),
-      this.boardsRepository
-        .createQueryBuilder('b')
-        .select('b.community_id', 'communityId')
-        .addSelect('COUNT(*)', 'count')
-        .where('b.community_id IN (:...ids)', { ids })
-        .andWhere('b.visibility = :visibility', {
-          visibility: BoardVisibility.PUBLIC,
-        })
-        .groupBy('b.community_id')
-        .getRawMany<{ communityId: string; count: string }>(),
+      this.boardsRepository.query(
+        `SELECT "communityId", COUNT(DISTINCT "boardId")::int AS count
+         FROM (
+           SELECT b.id AS "boardId", b.community_id AS "communityId"
+           FROM boards b
+           WHERE b.community_id = ANY($1) AND b.visibility = $2
+           UNION ALL
+           SELECT bc.board_id AS "boardId", bc.community_id AS "communityId"
+           FROM board_communities bc
+           JOIN boards b ON b.id = bc.board_id
+           WHERE bc.community_id = ANY($1) AND b.visibility = $2
+         ) posted
+         GROUP BY "communityId"`,
+        [ids, BoardVisibility.PUBLIC],
+      ) as Promise<{ communityId: string; count: string }[]>,
       this.membersRepository.find({
         where: { communityId: In(ids), userId: currentUserId },
       }),

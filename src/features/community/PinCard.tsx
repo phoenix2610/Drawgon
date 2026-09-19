@@ -1,16 +1,24 @@
-import { ArrowBigUp, Bookmark, MessageSquare } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import type { FeedItem } from '@shared/community';
-import { Avatar } from '@/components/Avatar';
-import { addBookmark, removeBookmark, removeVote, setVote } from '@/lib/community-api';
+import { ArrowBigUp, Bookmark, MessageSquare } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import type { FeedItem } from "@shared/community";
+import { Avatar } from "@/components/Avatar";
+import {
+  addBookmark,
+  removeBookmark,
+  removeVote,
+  setVote,
+} from "@/lib/community-api";
 
 /**
  * Pinterest-flavoured feed tile: image-forward, no chrome until you hover,
  * at which point the save action and title overlay come forward.
  */
 export function PinCard({ item }: { item: FeedItem }) {
-  const [stats, setStats] = useState({ score: item.score, myVote: item.myVote });
+  const [stats, setStats] = useState({
+    score: item.score,
+    myVote: item.myVote,
+  });
   const [bookmarked, setBookmarked] = useState(item.bookmarked);
   const [pending, setPending] = useState(false);
 
@@ -37,7 +45,9 @@ export function PinCard({ item }: { item: FeedItem }) {
     setPending(true);
     try {
       setStats(
-        stats.myVote === 1 ? await removeVote(item.id) : await setVote(item.id, 1),
+        stats.myVote === 1
+          ? await removeVote(item.id)
+          : await setVote(item.id, 1),
       );
     } finally {
       setPending(false);
@@ -75,15 +85,15 @@ export function PinCard({ item }: { item: FeedItem }) {
           onClick={(e) => void toggleBookmark(e)}
           disabled={pending}
           aria-pressed={bookmarked}
-          title={bookmarked ? 'Saved' : 'Save'}
+          title={bookmarked ? "Saved" : "Save"}
           className={`absolute right-2 top-2 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold opacity-0 shadow-md transition group-hover:opacity-100 focus-visible:opacity-100 ${
             bookmarked
-              ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-              : 'bg-brand text-white hover:bg-brand-hover'
+              ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+              : "bg-brand text-white hover:bg-brand-hover"
           }`}
         >
-          <Bookmark size={13} fill={bookmarked ? 'currentColor' : 'none'} />
-          {bookmarked ? 'Saved' : 'Save'}
+          <Bookmark size={13} fill={bookmarked ? "currentColor" : "none"} />
+          {bookmarked ? "Saved" : "Save"}
         </button>
 
         <button
@@ -93,10 +103,15 @@ export function PinCard({ item }: { item: FeedItem }) {
           aria-pressed={stats.myVote === 1}
           title="Upvote"
           className={`absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold opacity-0 shadow-md transition group-hover:opacity-100 focus-visible:opacity-100 dark:bg-neutral-900/90 ${
-            stats.myVote === 1 ? 'text-upvote' : 'text-neutral-700 dark:text-neutral-200'
+            stats.myVote === 1
+              ? "text-upvote"
+              : "text-neutral-700 dark:text-neutral-200"
           }`}
         >
-          <ArrowBigUp size={15} fill={stats.myVote === 1 ? 'currentColor' : 'none'} />
+          <ArrowBigUp
+            size={15}
+            fill={stats.myVote === 1 ? "currentColor" : "none"}
+          />
           {stats.score}
         </button>
       </div>
@@ -105,6 +120,14 @@ export function PinCard({ item }: { item: FeedItem }) {
         <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-50">
           {item.title}
         </p>
+        <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+          Board: {item.boardTitle}
+        </p>
+        {item.postDetails && (
+          <p className="mt-1 line-clamp-2 text-xs text-neutral-500 dark:text-neutral-400">
+            {item.postDetails}
+          </p>
+        )}
         <div className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
           <Avatar name={item.ownerName} size="sm" />
           <span className="truncate">{item.ownerName}</span>

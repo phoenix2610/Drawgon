@@ -11,7 +11,10 @@ import {
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
 import { CommunitiesService } from './communities.service';
 import { CreateCommunityDto } from './dto/create-community.dto';
-import { SetBoardCommunityDto } from './dto/set-board-community.dto';
+import {
+  SetBoardCommunitiesDto,
+  SetBoardCommunityDto,
+} from './dto/set-board-community.dto';
 
 @Controller('communities')
 export class CommunitiesController {
@@ -51,6 +54,11 @@ export class CommunitiesController {
   leave(@Param('slug') slug: string, @Session() session: UserSession) {
     return this.communitiesService.leave(slug, session.user.id);
   }
+
+  @Delete(':slug')
+  remove(@Param('slug') slug: string, @Session() session: UserSession) {
+    return this.communitiesService.remove(slug, session.user.id);
+  }
 }
 
 @Controller('boards')
@@ -67,6 +75,19 @@ export class BoardCommunityController {
       id,
       session.user.id,
       dto.slug ?? null,
+    );
+  }
+
+  @Put(':id/communities')
+  setCommunities(
+    @Param('id') id: string,
+    @Session() session: UserSession,
+    @Body() dto: SetBoardCommunitiesDto,
+  ) {
+    return this.communitiesService.setBoardCommunities(
+      id,
+      session.user.id,
+      dto.slugs ?? [],
     );
   }
 }

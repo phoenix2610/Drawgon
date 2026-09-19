@@ -4,12 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Board } from '../../database/entities/board.entity';
+import { IsNull, Repository } from 'typeorm';
+import { Board, BoardVisibility } from '../../database/entities/board.entity';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardSnapshotDto } from './dto/update-board-snapshot.dto';
 import { UpdateBoardVisibilityDto } from './dto/update-board-visibility.dto';
 import { RenameBoardDto } from './dto/rename-board.dto';
+import { PublishBoardDto } from './dto/publish-board.dto';
 
 @Injectable()
 export class BoardsService {
@@ -20,7 +21,7 @@ export class BoardsService {
 
   async listByOwner(ownerId: string): Promise<Board[]> {
     return this.boardsRepository.find({
-      where: { ownerId },
+      where: { ownerId, publishedFromId: IsNull() },
       order: { updatedAt: 'DESC' },
     });
   }
@@ -77,7 +78,45 @@ export class BoardsService {
     dto: UpdateBoardVisibilityDto,
   ): Promise<Board> {
     const board = await this.findOneOwnedBy(id, ownerId);
+    if (dto.visibility === 'private') {
+      await this.boardsRepository.delete({
+        publishedFromId: board.id,
+        ownerId,
+      });
+    }
     board.visibility = dto.visibility;
     return this.boardsRepository.save(board);
+  }
+
+  async publish(
+    id: string,
+    ownerId: string,
+    dto: PublishBoardDto,
+  ): Promise<Board> {
+    const board = await this.findOneOwnedBy(id, ownerId);
+    const postTitle = dto.postTitle.trim();
+    if (!postTitle) {
+      throw new BadRequestException('Post title cannot be blank.');
+    }
+
+    return this.boardsRepository.save(
+      this.boardsRepository.create({
+        ownerId,
+        title: board.title,
+        publishedFromId: board.id,
+        visibility: BoardVisibility.PUBLIC,
+        snapshot: board.snapshot,
+        thumbnailUrl: board.thumbnailUrl,
+        postTitle,
+        postDetails: dto.postDetails.trim() || null,
+        postTags: dto.postTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean),
+        postMedia: dto.postMedia,
+      }),
+    );
+  }
+
+  async remove(id: string, ownerId: string): Promise<void> {
+    const board = await this.findOneOwnedBy(id, ownerId);
+    await this.boardsRepository.remove(board);
   }
 }

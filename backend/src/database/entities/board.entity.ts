@@ -4,6 +4,8 @@ import {
   Entity,
   Index,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -32,6 +34,22 @@ export class Board {
   @Column({ type: 'varchar', length: 255 })
   title!: string;
 
+  @Index()
+  @Column({ type: 'uuid', name: 'published_from_id', nullable: true })
+  publishedFromId!: string | null;
+
+  @Column({ type: 'varchar', length: 255, name: 'post_title', nullable: true })
+  postTitle!: string | null;
+
+  @Column({ type: 'text', name: 'post_details', nullable: true })
+  postDetails!: string | null;
+
+  @Column({ type: 'jsonb', name: 'post_tags', default: [] })
+  postTags!: string[];
+
+  @Column({ type: 'jsonb', name: 'post_media', default: [] })
+  postMedia!: { name: string; type: string; url: string }[];
+
   @Column({
     type: 'enum',
     enum: BoardVisibility,
@@ -50,6 +68,14 @@ export class Board {
     foreignKeyConstraintName: 'FK_boards_community',
   })
   community?: Community | null;
+
+  @ManyToMany(() => Community)
+  @JoinTable({
+    name: 'board_communities',
+    joinColumn: { name: 'board_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'community_id', referencedColumnName: 'id' },
+  })
+  communities?: Community[];
 
   @Column({ type: 'jsonb', default: {} })
   snapshot!: Record<string, unknown>;

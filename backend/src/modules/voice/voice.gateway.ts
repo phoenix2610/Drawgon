@@ -9,6 +9,7 @@ import {
 import { Logger } from '@nestjs/common';
 import type { Server, Socket } from 'socket.io';
 import { auth } from '../../common/auth/auth.instance';
+import { getFrontendOrigins } from '../../config/frontend-origins';
 
 interface Peer {
   socketId: string;
@@ -33,7 +34,7 @@ function roomName(boardId: string) {
 @WebSocketGateway({
   namespace: '/voice',
   cors: {
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+    origin: getFrontendOrigins(),
     credentials: true,
   },
 })

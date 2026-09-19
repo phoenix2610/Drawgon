@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 import { getDatabaseSsl } from '../../config/database-ssl';
+import { getFrontendOrigins } from '../../config/frontend-origins';
 
 /**
  * In development the frontend (localhost:5173) and API (localhost:3000) are
@@ -32,7 +33,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  trustedOrigins: [process.env.FRONTEND_URL ?? 'http://localhost:5173'],
+  trustedOrigins: getFrontendOrigins(),
   ...(isProduction && {
     advanced: {
       defaultCookieAttributes: {

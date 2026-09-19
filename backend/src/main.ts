@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
+import { getFrontendOrigins } from './config/frontend-origins';
 
 /**
  * Board snapshots embed their assets (pasted images, imported PDF pages) as
@@ -19,7 +20,7 @@ async function bootstrap() {
   app.use(urlencoded({ limit: MAX_BODY_SIZE, extended: true }));
 
   app.enableCors({
-    origin: configService.get<string>('FRONTEND_URL'),
+    origin: getFrontendOrigins(configService.get<string>('FRONTEND_URL')),
     credentials: true,
   });
 

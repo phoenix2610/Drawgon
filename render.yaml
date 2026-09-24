@@ -45,12 +45,8 @@ services:
       # cross-site Netlify -> Render request pair requires.
       - key: NODE_ENV
         value: production
-      # Comma-separated: every deployed frontend origin, no trailing slash.
-      # CORS, better-auth's trustedOrigins and the voice gateway all read
-      # this list (see backend/src/config/frontend-origins.ts); an origin
-      # missing here shows up as "Can't reach the server" on that frontend.
       - key: FRONTEND_URL
-        value: https://drawgon-indol.vercel.app,https://drawgons.netlify.app
+        value: https://drawgons.netlify.app
       # Set these in the Render dashboard — never commit them.
       #   DATABASE_URL      Supabase session pooler URI (port 5432, not 6543)
       #   BETTER_AUTH_SECRET  reuse the existing value or generate a new one

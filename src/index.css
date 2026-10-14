@@ -1,0 +1,237 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+
+  --color-brand: #5865f2;
+  --color-brand-hover: #4752c4;
+
+  --color-upvote: #ff4500;
+  --color-downvote: #7193ff;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+@keyframes drawgon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 0.72;
+    transform: translateY(-4px) scale(1.02);
+  }
+}
+
+.drawgon-pulse {
+  animation: drawgon-pulse 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawgon-pulse {
+    animation: none;
+  }
+}
+
+.drawgon-markdown > :first-child {
+  margin-top: 0;
+}
+.drawgon-markdown h1,
+.drawgon-markdown h2,
+.drawgon-markdown h3,
+.drawgon-markdown h4 {
+  margin: 1em 0 0.4em;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.drawgon-markdown h1 {
+  font-size: 1.5em;
+}
+.drawgon-markdown h2 {
+  font-size: 1.25em;
+}
+.drawgon-markdown h3 {
+  font-size: 1.1em;
+}
+.drawgon-markdown p,
+.drawgon-markdown ul,
+.drawgon-markdown ol,
+.drawgon-markdown blockquote,
+.drawgon-markdown pre,
+.drawgon-markdown table {
+  margin: 0 0 0.75em;
+}
+.drawgon-markdown ul {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+.drawgon-markdown ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+}
+.drawgon-markdown li > input[type='checkbox'] {
+  margin-right: 0.4em;
+}
+.drawgon-markdown a {
+  color: var(--tl-color-primary);
+  text-decoration: underline;
+}
+.drawgon-markdown blockquote {
+  border-left: 3px solid var(--tl-color-divider);
+  padding-left: 0.8em;
+  color: var(--tl-color-text-3);
+}
+.drawgon-markdown code {
+  font-family: var(--tl-font-mono, ui-monospace, monospace);
+  font-size: 0.9em;
+  background: var(--tl-color-low);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+.drawgon-markdown pre {
+  background: var(--tl-color-low);
+  border-radius: 6px;
+  padding: 0.6em 0.8em;
+  overflow-x: auto;
+}
+.drawgon-markdown pre code {
+  background: none;
+  padding: 0;
+}
+.drawgon-markdown img {
+  max-width: 100%;
+}
+.drawgon-markdown hr {
+  border: none;
+  border-top: 1px solid var(--tl-color-divider);
+  margin: 1em 0;
+}
+.drawgon-markdown table,
+.drawgon-csv {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.drawgon-markdown th,
+.drawgon-markdown td,
+.drawgon-csv th,
+.drawgon-csv td {
+  border: 1px solid var(--tl-color-divider);
+  padding: 3px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+.drawgon-markdown th,
+.drawgon-csv th {
+  background: var(--tl-color-low);
+  font-weight: 600;
+}
+
+.drawgon-code {
+  --code-bg: #ffffff;
+  --code-gutter-bg: #f6f6f6;
+  --code-border: #e5e5e5;
+  --code-fg: #1f1f1f;
+  --code-muted: #6e7781;
+  --code-caret: #000000;
+  --code-selection: #add6ff;
+  --tok-keyword: #0000ff;
+  --tok-control: #af00db;
+  --tok-string: #a31515;
+  --tok-number: #098658;
+  --tok-comment: #008000;
+  --tok-function: #795e26;
+  --tok-type: #267f99;
+  --tok-variable: #001080;
+  --tok-tag: #800000;
+  --tok-attr: #e50000;
+  --tok-meta: #0000ff;
+}
+.dark .drawgon-code {
+  --code-bg: #1e1e1e;
+  --code-gutter-bg: #1e1e1e;
+  --code-border: #2b2b2b;
+  --code-fg: #d4d4d4;
+  --code-muted: #858585;
+  --code-caret: #aeafad;
+  --code-selection: #264f78;
+  --tok-keyword: #569cd6;
+  --tok-control: #c586c0;
+  --tok-string: #ce9178;
+  --tok-number: #b5cea8;
+  --tok-comment: #6a9955;
+  --tok-function: #dcdcaa;
+  --tok-type: #4ec9b0;
+  --tok-variable: #9cdcfe;
+  --tok-tag: #569cd6;
+  --tok-attr: #9cdcfe;
+  --tok-meta: #569cd6;
+}
+.drawgon-code {
+  background: var(--code-bg);
+  color: var(--code-fg);
+}
+.drawgon-code textarea::selection {
+  background: var(--code-selection);
+  color: transparent;
+}
+.drawgon-code .hljs-keyword,
+.drawgon-code .hljs-literal,
+.drawgon-code .hljs-built_in {
+  color: var(--tok-keyword);
+}
+.drawgon-code .hljs-keyword.hljs-control,
+.drawgon-code .hljs-meta .hljs-keyword {
+  color: var(--tok-control);
+}
+.drawgon-code .hljs-string,
+.drawgon-code .hljs-regexp,
+.drawgon-code .hljs-template-string {
+  color: var(--tok-string);
+}
+.drawgon-code .hljs-number {
+  color: var(--tok-number);
+}
+.drawgon-code .hljs-comment,
+.drawgon-code .hljs-quote {
+  color: var(--tok-comment);
+  font-style: italic;
+}
+.drawgon-code .hljs-title.function_,
+.drawgon-code .hljs-title.function_ .hljs-title {
+  color: var(--tok-function);
+}
+.drawgon-code .hljs-title.class_,
+.drawgon-code .hljs-type {
+  color: var(--tok-type);
+}
+.drawgon-code .hljs-variable,
+.drawgon-code .hljs-params,
+.drawgon-code .hljs-property,
+.drawgon-code .hljs-attr {
+  color: var(--tok-variable);
+}
+.drawgon-code .hljs-name,
+.drawgon-code .hljs-selector-tag {
+  color: var(--tok-tag);
+}
+.drawgon-code .hljs-attribute,
+.drawgon-code .hljs-selector-class,
+.drawgon-code .hljs-selector-id {
+  color: var(--tok-attr);
+}
+.drawgon-code .hljs-meta,
+.drawgon-code .hljs-symbol {
+  color: var(--tok-meta);
+}

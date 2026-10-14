@@ -1,0 +1,59 @@
+# Render blueprint for the Drawgon NestJS API.
+#
+# Netlify serves only the static frontend; it cannot host this service. The
+# socket.io voice gateway needs a long-lived process and the Postgres pool
+# needs to survive between requests, neither of which a serverless function
+# provides. Deploy this blueprint, then point the frontend's VITE_API_URL at
+# the resulting https://<service>.onrender.com origin and rebuild on Netlify.
+services:
+  - type: web
+    name: drawgon-api
+    runtime: node
+    plan: free
+    # Supabase runs this project in ap-northeast-1 (Tokyo); Singapore is the
+    # nearest Render region, which keeps the round trip to Postgres short.
+    region: singapore
+
+    # The repository root is the build context so the backend workspace and
+    # the shared/ + database/ sibling folders all resolve.
+    # `--include=dev` is load-bearing: NODE_ENV=production below tells npm to
+    # skip devDependencies, but `nest` and `tsc-alias` live there, so a plain
+    # `npm ci` builds an install with no compiler and dies on
+    # `nest: command not found`.
+    #
+    # Clearing tsconfig.build.tsbuildinfo is load-bearing too: nest-cli.json
+    # sets deleteOutDir, so dist/ is wiped on every build, but a tsbuildinfo
+    # surviving in Render's build cache convinces tsc everything is already
+    # emitted. The build then "succeeds" while producing an empty dist/.
+    buildCommand: >-
+      cd backend &&
+      npm ci --include=dev &&
+      rm -rf dist tsconfig.build.tsbuildinfo &&
+      npm run build
+    # Apply any pending schema changes before the API accepts requests. This
+    # keeps a fresh or previously deployed database aligned with the entities.
+    startCommand: cd backend && npm run migration:run && npm run start:prod
+    # AppController's GET / runs `SELECT 1`, so a passing health check also
+    # proves the Supabase connection is live — not just that Node booted.
+    healthCheckPath: /
+
+    envVars:
+      # vite.config.ts and the backend both rely on Node >= 20.11.
+      - key: NODE_VERSION
+        value: "22"
+      # Switches better-auth to SameSite=None; Secure cookies, which the
+      # cross-site Netlify -> Render request pair requires.
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://drawgons.netlify.app
+      # Set these in the Render dashboard — never commit them.
+      #   DATABASE_URL      Supabase session pooler URI (port 5432, not 6543)
+      #   BETTER_AUTH_SECRET  reuse the existing value or generate a new one
+      #   BETTER_AUTH_URL   https://<this-service>.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      - key: BETTER_AUTH_URL
+        sync: false

@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "typeorm": "^1.1.0"
+  }
+}

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ccwp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ccwp
+      POSTGRES_PASSWORD: ccwp_dev_password
+      POSTGRES_DB: ccwp
+    ports:
+      - "5432:5432"
+    volumes:
+      - ccwp-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ccwp -d ccwp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ccwp-postgres-data:

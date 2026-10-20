@@ -42,11 +42,11 @@ services:
       - key: NODE_VERSION
         value: "22"
       # Switches better-auth to SameSite=None; Secure cookies, which the
-      # cross-site Netlify -> Render request pair requires.
+      # cross-site Vercel -> Render request pair requires.
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
-        value: https://drawgons.netlify.app
+        value: https://drawgon-indol.vercel.app
       # Set these in the Render dashboard — never commit them.
       #   DATABASE_URL      Supabase session pooler URI (port 5432, not 6543)
       #   BETTER_AUTH_SECRET  reuse the existing value or generate a new one

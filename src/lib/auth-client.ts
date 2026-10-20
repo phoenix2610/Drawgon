@@ -27,4 +27,5 @@ export const useSession = authClient.useSession as unknown as () => {
   } | null;
   isPending: boolean;
   error: any;
+  refetch: () => Promise<void>;
 };

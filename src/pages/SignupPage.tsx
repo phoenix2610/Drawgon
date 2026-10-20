@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { signUp } from '@/lib/auth-client';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { signUp, useSession } from '@/lib/auth-client';
+import { safeNextPath } from '@/lib/safe-next';
 import { DrawgonMark } from '@/components/DrawgonMark';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -11,19 +12,27 @@ export function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeNextPath(params.get('next'));
+  const nextSuffix = next === '/' ? '' : `?next=${encodeURIComponent(next)}`;
+  const { data: session, refetch } = useSession();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     const { error: signUpError } = await signUp.email({ name, email, password });
-    setSubmitting(false);
     if (signUpError) {
       setError(signUpError.message ?? 'Could not create account.');
+      setSubmitting(false);
       return;
     }
-    navigate('/');
+    await refetch();
+    setSubmitting(false);
+    navigate(next, { replace: true });
   }
+
+  if (session && !submitting) return <Navigate to={next} replace />;
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 dark:bg-neutral-950">
@@ -97,7 +106,7 @@ export function SignupPage() {
 
         <p className="mt-4 text-center text-sm text-neutral-500">
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-brand hover:text-brand-hover">
+          <Link to={`/login${nextSuffix}`} className="font-medium text-brand hover:text-brand-hover">
             Log in
           </Link>
         </p>

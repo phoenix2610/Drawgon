@@ -20,9 +20,18 @@ export function JoinBoardPage() {
     }
     setJoining(true);
     joinBoardViaToken(token)
-      .then(({ boardId }) => {
+      .then(({ boardId, boardTitle, role, alreadyMember, alreadyOwner }) => {
         setDone(true);
-        toast.success('You joined the board!');
+        if (alreadyOwner) {
+          toast.success('This is your board', `Opening "${boardTitle}".`);
+        } else if (alreadyMember) {
+          toast.success(`You already have access to "${boardTitle}"`);
+        } else {
+          toast.success(
+            `You joined "${boardTitle}"`,
+            `You can ${role === 'editor' ? 'edit' : 'view'} this board. The owner has been notified.`,
+          );
+        }
         setTimeout(() => navigate(`/boards/${boardId}`), 1200);
       })
       .catch((err) => {

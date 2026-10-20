@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useSession } from '@/lib/auth-client';
 import { API_BASE_URL } from '@/lib/api-client';
 import { DrawgonLoader } from '@/components/DrawgonLoader';
@@ -46,6 +46,7 @@ function UnreachableBackend({ detail }: { detail: string }) {
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { data, isPending, error } = useSession();
   const [timedOut, setTimedOut] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     if (!isPending) return;
@@ -66,7 +67,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!data) {
-    return <Navigate to="/login" replace />;
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?next=${next}`} replace />;
   }
 
   return <>{children}</>;

@@ -48,14 +48,20 @@ export async function listCollaborators(
 
 export async function inviteCollaborator(
   id: string,
-  target: string,
+  target: string | { userId: string },
   role: CollaboratorRole = 'editor',
 ): Promise<BoardCollaborator[]> {
-  const value = target.trim();
-  const isEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
+  let body: Record<string, string>;
+  if (typeof target === 'string') {
+    const value = target.trim();
+    const isEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
+    body = isEmail ? { email: value, role } : { username: value, role };
+  } else {
+    body = { userId: target.userId, role };
+  }
   const res = await apiClient.post<BoardCollaborator[]>(
     `/boards/${id}/collaborators`,
-    isEmail ? { email: value, role } : { username: value, role },
+    body,
   );
   return res.data;
 }
@@ -165,7 +171,15 @@ export async function generateInviteLink(
   return res.data;
 }
 
-export async function joinBoardViaToken(token: string): Promise<{ boardId: string }> {
-  const res = await apiClient.post<{ boardId: string }>(`/boards/join/${token}`);
+export interface JoinedBoard {
+  boardId: string;
+  boardTitle: string;
+  role: 'owner' | 'editor' | 'viewer';
+  alreadyMember?: boolean;
+  alreadyOwner?: boolean;
+}
+
+export async function joinBoardViaToken(token: string): Promise<JoinedBoard> {
+  const res = await apiClient.post<JoinedBoard>(`/boards/join/${token}`);
   return res.data;
 }

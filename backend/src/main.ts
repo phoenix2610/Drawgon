@@ -9,6 +9,7 @@ const MAX_BODY_SIZE = '25mb';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
   const configService = app.get(ConfigService);
 
   app.use(json({ limit: MAX_BODY_SIZE }));

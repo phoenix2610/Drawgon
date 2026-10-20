@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Tldraw,
   UserRecordType,
@@ -14,7 +14,7 @@ import {
 } from '@tldraw/tldraw';
 import { useSync } from '@tldraw/sync';
 import '@tldraw/tldraw/tldraw.css';
-import { WifiOff } from 'lucide-react';
+import { Check, Loader2, WifiOff } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-client';
 import { updateBoardThumbnail } from '@/lib/boards-api';
 import { useThemeStore } from '@/store/theme';
@@ -25,6 +25,7 @@ import { FileImporter } from './FileImporter';
 import { CustomToolbar, LeftStylePanel } from './canvas-components';
 
 const THUMBNAIL_DEBOUNCE_MS = 3000;
+const SAVED_AFTER_MS = 2500;
 
 const CURSOR_COLORS = [
   '#e03131', '#f76707', '#f59f00', '#2f9e44', '#0c8599',
@@ -85,7 +86,7 @@ function PresenceReporter({
     'collaborators',
     () =>
       editor.getCollaborators().map((c) => ({
-        userId: c.userId,
+        userId: c.userId.replace(/^user:/, ''),
         name: c.userName || 'Someone',
         color: c.color,
       })),
@@ -107,6 +108,8 @@ export function CollaborativeCanvas({
   const theme = useThemeStore((s) => s.theme);
   const isWide = useMediaQuery(WIDE_LAYOUT_QUERY);
   const thumbnailTimer = useRef<number | undefined>(undefined);
+  const savedTimer = useRef<number | undefined>(undefined);
+  const [saving, setSaving] = useState(false);
 
   const users = useMemo<TLUserStore>(
     () => ({
@@ -141,6 +144,12 @@ export function CollaborativeCanvas({
       const unsubscribe = editor.store.listen(
         () => {
           if (editor.getIsReadonly()) return;
+          setSaving(true);
+          window.clearTimeout(savedTimer.current);
+          savedTimer.current = window.setTimeout(
+            () => setSaving(false),
+            SAVED_AFTER_MS,
+          );
           window.clearTimeout(thumbnailTimer.current);
           thumbnailTimer.current = window.setTimeout(() => {
             void renderThumbnail(editor).then((thumbnail) => {
@@ -152,6 +161,7 @@ export function CollaborativeCanvas({
       );
       return () => {
         window.clearTimeout(thumbnailTimer.current);
+        window.clearTimeout(savedTimer.current);
         unsubscribe();
       };
     },
@@ -193,6 +203,24 @@ export function CollaborativeCanvas({
         <FileImporter />
         <PresenceReporter self={self} onChange={onPresenceChange} />
       </Tldraw>
+      {store.connectionStatus === 'online' && (
+        <div
+          role="status"
+          className="pointer-events-none absolute bottom-4 left-28 z-[400] hidden items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-neutral-500 shadow-sm sm:inline-flex dark:bg-neutral-900/90 dark:text-neutral-400"
+        >
+          {saving ? (
+            <>
+              <Loader2 size={11} className="animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Check size={11} className="text-emerald-500" />
+              All changes saved
+            </>
+          )}
+        </div>
+      )}
       {store.connectionStatus === 'offline' && (
         <div className="pointer-events-none absolute right-3 top-14 z-[400] inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 shadow dark:bg-amber-500/15 dark:text-amber-300">
           <WifiOff size={12} />

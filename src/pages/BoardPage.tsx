@@ -12,7 +12,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Editor } from "@tldraw/tldraw";
 import {
@@ -46,6 +46,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Board, BoardPostMedia, BoardCollaborator } from "@shared/board";
 import type { CommunitySummary } from "@shared/community";
 import { useSession } from "@/lib/auth-client";
+import { useToast } from "@/components/toast/ToastProvider";
 
 export function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>();
@@ -83,6 +84,27 @@ export function BoardPage() {
   const [editor, setEditor] = useState<Editor | null>(null);
   const navigate = useNavigate();
   const { data: session } = useSession();
+  const toast = useToast();
+  const selfId = session?.user.id;
+  const knownPeople = useRef<Map<string, string> | null>(null);
+  const presenceStart = useRef(Date.now());
+
+  const handlePresence = useCallback(
+    (people: ActivePerson[]) => {
+      setActivePeople(people);
+      const current = new Map(people.map((p) => [p.userId, p.name]));
+      const previous = knownPeople.current;
+      knownPeople.current = current;
+      if (!previous || Date.now() - presenceStart.current < 4000) return;
+      for (const [id, name] of current) {
+        if (id !== selfId && !previous.has(id)) toast.info(`${name} joined the board`);
+      }
+      for (const [id, name] of previous) {
+        if (id !== selfId && !current.has(id)) toast.info(`${name} left the board`);
+      }
+    },
+    [selfId, toast],
+  );
   const {
     toggleOpen: toggleFilesOpen,
     fileCount,
@@ -383,9 +405,20 @@ export function BoardPage() {
           )}
           {activePeople.length > 1 && (
             <div
-              className="hidden items-center gap-1.5 rounded-full border border-emerald-200/80 lg:inline-flex bg-emerald-50 px-2.5 py-1 text-xs text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-500/15 dark:text-emerald-400"
+              className="hidden items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50 py-1 pl-1.5 pr-2.5 text-xs text-emerald-700 sm:inline-flex dark:border-emerald-800/60 dark:bg-emerald-500/15 dark:text-emerald-400"
               title={`Active now: ${activePeople.map((p) => p.name).join(", ")}`}
             >
+              <span className="flex -space-x-1.5">
+                {activePeople.slice(0, 4).map((p) => (
+                  <span
+                    key={p.userId}
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 border-white text-[9px] font-bold text-white dark:border-neutral-900"
+                    style={{ background: p.color }}
+                  >
+                    {p.name.trim().charAt(0).toUpperCase() || "?"}
+                  </span>
+                ))}
+              </span>
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
@@ -429,7 +462,7 @@ export function BoardPage() {
               name: session.user.name || session.user.email,
             }}
             onEditorReady={setEditor}
-            onPresenceChange={setActivePeople}
+            onPresenceChange={handlePresence}
           />
           <VoiceBar boardId={board.id} />
         </div>
@@ -851,6 +884,7 @@ export function BoardPage() {
         <CollaboratorsDialog
           board={board}
           currentUserId={session.user.id}
+          activeUserIds={activePeople.map((p) => p.userId)}
           onClose={() => setShareOpen(false)}
           onPeopleChange={setCollaborators}
           onLeft={() => navigate("/")}

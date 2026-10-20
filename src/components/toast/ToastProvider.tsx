@@ -21,6 +21,7 @@ interface ToastApi {
   toast: (t: Omit<Toast, 'id'>) => void;
   success: (title: string, description?: string) => void;
   error: (title: string, description?: string) => void;
+  info: (title: string, description?: string) => void;
   dismiss: (id: number) => void;
 }
 
@@ -59,6 +60,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       dismiss,
       success: (title, description) => toast({ kind: 'success', title, description }),
       error: (title, description) => toast({ kind: 'error', title, description }),
+      info: (title, description) => toast({ kind: 'info', title, description }),
     }),
     [toast, dismiss],
   );

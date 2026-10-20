@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { useToast } from '@/components/toast/ToastProvider';
 
 export interface AppNotification {
   id: string;
-  type: 'follow' | 'collab_invite' | 'board_updated' | 'info';
+  type: 'follow' | 'collab_invite' | 'collab_joined' | 'board_updated' | 'info';
   title: string;
   body: string;
 
@@ -32,21 +33,38 @@ const Ctx = createContext<NotificationsCtx>({
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const seenIds = useRef<Set<string> | null>(null);
+  const toast = useToast();
 
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await apiClient.get<AppNotification[]>('/notifications');
-      setNotifications(res.data ?? []);
+      const next = res.data ?? [];
+      setNotifications(next);
+      const seen = seenIds.current;
+      if (seen) {
+        for (const n of next) {
+          if (!seen.has(n.id) && !n.read) {
+            toast.info(n.title, n.body);
+          }
+        }
+      }
+      seenIds.current = new Set(next.map((n) => n.id));
     } catch {
 
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     void fetchNotifications();
-    timerRef.current = setInterval(() => void fetchNotifications(), 30_000);
+    timerRef.current = setInterval(() => void fetchNotifications(), 15_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void fetchNotifications();
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [fetchNotifications]);
 

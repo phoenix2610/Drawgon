@@ -367,9 +367,10 @@ export function CollaboratorsDialog({
                     Invite via link
                   </p>
                   <p className="text-[11px] text-neutral-500">
-                    Anyone signed in who opens it joins as{' '}
-                    {role === 'editor' ? 'an editor' : 'a viewer'}. Expires in
-                    7 days.
+                    Send it to your collaborator (chat or email). They open it
+                    while signed in, or paste it on their dashboard, and join
+                    as {role === 'editor' ? 'an editor' : 'a viewer'}. Expires
+                    in 7 days.
                   </p>
                 </div>
                 <button

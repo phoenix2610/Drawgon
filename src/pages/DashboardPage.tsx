@@ -13,6 +13,7 @@ import { Avatar } from '@/components/Avatar';
 import { DrawgonLoader } from '@/components/DrawgonLoader';
 import { useToast } from '@/components/toast/ToastProvider';
 import type { BoardSummary } from '@shared/board';
+import { JoinWithLink } from '@/features/share/JoinWithLink';
 
 export function DashboardPage() {
   const [boards, setBoards] = useState<BoardSummary[]>([]);
@@ -97,6 +98,8 @@ export function DashboardPage() {
             {creating ? 'Creating...' : 'New board'}
           </button>
         </div>
+
+        <JoinWithLink />
 
         {loading && <DrawgonLoader fullScreen={false} size={72} />}
 

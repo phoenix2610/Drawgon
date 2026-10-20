@@ -1,5 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Download, Copy, Check, Code, FileText, Search } from 'lucide-react';
+import {
+  highlightLines,
+  languageForFile,
+} from '@/features/canvas/documents/code-highlight';
 
 interface CodeTextViewerProps {
   blob: Blob;
@@ -55,13 +59,21 @@ export function CodeTextViewer({ blob, fileName }: CodeTextViewerProps) {
     return content.split('\n');
   }, [content]);
 
+  const highlighted = useMemo(
+    () => highlightLines(content, languageForFile(fileName)),
+    [content, fileName],
+  );
+
   const filteredLines = useMemo(() => {
-    if (!searchQuery.trim()) return lines.map((l, i) => ({ text: l, lineNum: i + 1 }));
+    const numbered = lines.map((text, i) => ({
+      text,
+      html: highlighted[i] ?? '',
+      lineNum: i + 1,
+    }));
+    if (!searchQuery.trim()) return numbered;
     const q = searchQuery.toLowerCase();
-    return lines
-      .map((l, i) => ({ text: l, lineNum: i + 1 }))
-      .filter((item) => item.text.toLowerCase().includes(q));
-  }, [lines, searchQuery]);
+    return numbered.filter((item) => item.text.toLowerCase().includes(q));
+  }, [lines, highlighted, searchQuery]);
 
   const handleCopy = async () => {
     try {
@@ -187,7 +199,7 @@ export function CodeTextViewer({ blob, fileName }: CodeTextViewerProps) {
         )}
 
         {!loading && (viewMode === 'raw' || !isMarkdown) && (
-          <div className="p-4 font-mono text-xs leading-relaxed">
+          <div className="drawgon-code p-4 font-mono text-xs leading-relaxed">
             <table className="w-full border-collapse">
               <tbody>
                 {filteredLines.map((item) => (
@@ -195,9 +207,10 @@ export function CodeTextViewer({ blob, fileName }: CodeTextViewerProps) {
                     <td className="w-12 select-none border-r border-neutral-200 pr-3 text-right text-[11px] text-neutral-400 dark:border-neutral-800 dark:text-neutral-600">
                       {item.lineNum}
                     </td>
-                    <td className="pl-4 whitespace-pre-wrap break-all text-neutral-800 dark:text-neutral-200 font-mono">
-                      {item.text || ' '}
-                    </td>
+                    <td
+                      className="pl-4 whitespace-pre-wrap break-all font-mono"
+                      dangerouslySetInnerHTML={{ __html: item.html || ' ' }}
+                    />
                   </tr>
                 ))}
               </tbody>

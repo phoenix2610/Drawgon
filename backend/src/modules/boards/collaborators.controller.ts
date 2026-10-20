@@ -29,7 +29,7 @@ export class CollaboratorsController {
     return this.collabsService.invite(
       boardId,
       session.user.id,
-      { username: dto.username, email: dto.email },
+      { userId: dto.userId, username: dto.username, email: dto.email },
       dto.role ?? 'editor',
     );
   }

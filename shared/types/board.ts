@@ -55,4 +55,5 @@ export interface BoardCollaborator {
   avatarUrl: string | null;
   role: 'owner' | CollaboratorRole;
   addedAt: string | null;
+  lastOpenedAt: string | null;
 }

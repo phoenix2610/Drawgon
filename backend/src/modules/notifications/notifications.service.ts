@@ -6,7 +6,7 @@ import { BoardCollaborator } from '../../database/entities/board-collaborator.en
 
 export interface NotificationDto {
   id: string;
-  type: 'follow' | 'collab_invite' | 'board_updated' | 'info';
+  type: 'follow' | 'collab_invite' | 'collab_joined' | 'board_updated' | 'info';
   title: string;
   body: string;
   createdAt: string;
@@ -50,7 +50,7 @@ export class NotificationsService {
 
     const collabs = await this.collabsRepo.find({
       where: { userId },
-      relations: { board: true },
+      relations: { board: { owner: true } },
       order: { createdAt: 'DESC' },
       take: 20,
     });
@@ -60,15 +60,42 @@ export class NotificationsService {
       return {
         id,
         type: 'collab_invite',
-        title: `Invited to "${c.board?.title || 'Untitled board'}"`,
-        body: `You were invited as an ${c.role} to collaborate.`,
+        title: `${c.board?.owner?.name || 'Someone'} invited you to "${c.board?.title || 'Untitled board'}"`,
+        body: `You can ${c.role === 'editor' ? 'edit' : 'view'} this board. Open it to start collaborating.`,
         createdAt: new Date(c.createdAt).toISOString(),
         read: userReadSet.has(id),
         link: `/boards/${c.boardId}`,
       };
     });
 
-    const all = [...followNotifs, ...collabNotifs];
+    const joins = await this.collabsRepo.find({
+      where: { board: { ownerId: userId } },
+      relations: { board: true, user: true },
+      order: { createdAt: 'DESC' },
+      take: 20,
+    });
+
+    const joinNotifs: NotificationDto[] = joins
+      .filter((c) => c.userId !== userId)
+      .map((c) => {
+        const opened = c.lastOpenedAt ? new Date(c.lastOpenedAt) : null;
+        const id = `joined-${c.boardId}-${c.userId}-${new Date(c.createdAt).getTime()}-${opened ? 'opened' : 'sent'}`;
+        return {
+          id,
+          type: 'collab_joined' as const,
+          title: opened
+            ? `${c.user?.name || 'Someone'} opened "${c.board?.title || 'Untitled board'}"`
+            : `Invite sent to ${c.user?.name || 'Someone'}`,
+          body: opened
+            ? `Your invite was received. They can ${c.role === 'editor' ? 'edit' : 'view'} the board.`
+            : `They've been notified and can ${c.role === 'editor' ? 'edit' : 'view'} "${c.board?.title || 'Untitled board'}". We'll tell you when they open it.`,
+          createdAt: (opened ?? new Date(c.createdAt)).toISOString(),
+          read: userReadSet.has(id),
+          link: `/boards/${c.boardId}`,
+        };
+      });
+
+    const all = [...followNotifs, ...collabNotifs, ...joinNotifs];
     all.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),

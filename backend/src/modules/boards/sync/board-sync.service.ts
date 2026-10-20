@@ -33,6 +33,8 @@ type Room = TLSocketRoom<TLRecord, SessionMeta>;
 const SYNC_PATH = /^\/sync\/([^/?]+)(?:\?(.*))?$/;
 const PERSIST_DELAY_MS = 2000;
 const MAX_MESSAGE_BYTES = 50 * 1024 * 1024;
+const SAVE_ATTEMPTS = 5;
+const SAVE_RETRY_DELAY_MS = 750;
 
 @Injectable()
 export class BoardSyncService
@@ -155,6 +157,9 @@ export class BoardSyncService
     const result = await this.access.resolve(boardId, userId);
     if (!result) return reject(TLSyncErrorCloseEventReason.NOT_FOUND);
     if (ws.readyState !== WebSocket.OPEN) return;
+    if (result.role !== 'owner') {
+      void this.access.markOpened(boardId, userId).catch(() => undefined);
+    }
 
     let room: Room;
     try {
@@ -240,22 +245,36 @@ export class BoardSyncService
   private write(boardId: string, snapshot: RoomSnapshot) {
     const previous = this.pendingWrites.get(boardId) ?? Promise.resolve();
     const next = previous
-      .then(() =>
-        this.boardsRepository.update({ id: boardId }, {
-          snapshot: fromRoomSnapshot(snapshot),
-        } as QueryDeepPartialEntity<Board>),
-      )
-      .then(
-        () => undefined,
-        (error: Error) =>
-          this.logger.error(`Could not save board ${boardId}`, error),
-      )
+      .then(() => this.saveWithRetry(boardId, snapshot))
       .finally(() => {
         if (this.pendingWrites.get(boardId) === next) {
           this.pendingWrites.delete(boardId);
         }
       });
     this.pendingWrites.set(boardId, next);
+  }
+
+  private async saveWithRetry(boardId: string, snapshot: RoomSnapshot) {
+    const saved = fromRoomSnapshot(snapshot);
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await this.boardsRepository.update({ id: boardId }, {
+          snapshot: saved,
+        } as QueryDeepPartialEntity<Board>);
+        return;
+      } catch (error) {
+        if (attempt >= SAVE_ATTEMPTS) {
+          this.logger.error(
+            `Could not save board ${boardId} after ${attempt} attempts`,
+            error as Error,
+          );
+          return;
+        }
+        await new Promise((resolve) =>
+          setTimeout(resolve, SAVE_RETRY_DELAY_MS * attempt),
+        );
+      }
+    }
   }
 }
 

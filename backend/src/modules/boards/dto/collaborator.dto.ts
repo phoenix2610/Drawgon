@@ -12,6 +12,11 @@ const ROLES: CollaboratorRole[] = ['editor', 'viewer'];
 export class InviteCollaboratorDto {
   @IsOptional()
   @IsString()
+  @MaxLength(64)
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(41)
   username?: string;
 

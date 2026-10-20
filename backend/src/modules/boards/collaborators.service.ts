@@ -28,6 +28,7 @@ export interface CollaboratorSummary {
   avatarUrl: string | null;
   role: 'owner' | CollaboratorRole;
   addedAt: Date | null;
+  lastOpenedAt: Date | null;
 }
 
 interface InviteLinkPayload {
@@ -81,6 +82,7 @@ export class CollaboratorsService {
         avatarUrl: ownerProfile?.avatarUrl ?? null,
         role: 'owner' as const,
         addedAt: null,
+        lastOpenedAt: null,
       },
       ...collabs.map((c) => {
         const profile = profileMap.get(c.userId);
@@ -92,6 +94,7 @@ export class CollaboratorsService {
           avatarUrl: profile?.avatarUrl ?? null,
           role: c.role,
           addedAt: c.createdAt,
+          lastOpenedAt: c.lastOpenedAt,
         };
       }),
     ];
@@ -100,7 +103,7 @@ export class CollaboratorsService {
   async invite(
     boardId: string,
     currentUserId: string,
-    target: { username?: string; email?: string },
+    target: { userId?: string; username?: string; email?: string },
     role: CollaboratorRole,
   ): Promise<CollaboratorSummary[]> {
     await this.findOwnedOrFail(boardId, currentUserId);
@@ -177,7 +180,12 @@ export class CollaboratorsService {
     const board = await this.boardsRepo.findOneBy({ id: payload.b });
     if (!board) throw new NotFoundException('This board no longer exists.');
     if (board.ownerId === userId) {
-      return { boardId: board.id, alreadyOwner: true };
+      return {
+        boardId: board.id,
+        boardTitle: board.title,
+        role: 'owner' as const,
+        alreadyOwner: true,
+      };
     }
 
     const existing = await this.collabsRepo.findOneBy({
@@ -197,13 +205,25 @@ export class CollaboratorsService {
       await this.collabsRepo.save(existing);
       await this.sync.revalidate(board.id);
     }
-    return { boardId: board.id };
+    const joined = existing ? existing.role : payload.r;
+    return {
+      boardId: board.id,
+      boardTitle: board.title,
+      role: joined,
+      alreadyMember: existing !== null,
+    };
   }
 
   private async findUserId(target: {
+    userId?: string;
     username?: string;
     email?: string;
   }): Promise<string> {
+    if (target.userId) {
+      const user = await this.usersRepo.findOneBy({ id: target.userId });
+      if (user) return user.id;
+      throw new NotFoundException('That person no longer has an account.');
+    }
     const username = target.username?.trim().replace(/^@/, '');
     const email = target.email?.trim();
 

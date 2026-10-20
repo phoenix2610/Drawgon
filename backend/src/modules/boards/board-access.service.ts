@@ -45,6 +45,18 @@ export class BoardAccessService {
     const role = roles.reduce((best, r) => (RANK[r] > RANK[best] ? r : best));
     return { board, role };
   }
+
+  async markOpened(boardId: string, userId: string): Promise<void> {
+    await this.collaboratorsRepository
+      .createQueryBuilder()
+      .update()
+      .set({ lastOpenedAt: () => 'now()' })
+      .where('board_id = :boardId AND user_id = :userId', { boardId, userId })
+      .andWhere(
+        "(last_opened_at IS NULL OR last_opened_at < now() - interval '1 minute')",
+      )
+      .execute();
+  }
 }
 
 const UUID_PATTERN =

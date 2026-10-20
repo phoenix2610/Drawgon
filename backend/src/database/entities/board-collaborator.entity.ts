@@ -22,6 +22,9 @@ export class BoardCollaborator {
   @Column({ type: 'varchar', length: 20, default: 'editor' })
   role!: CollaboratorRole;
 
+  @Column({ type: 'timestamptz', name: 'last_opened_at', nullable: true })
+  lastOpenedAt!: Date | null;
+
   @ManyToOne(() => Board, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'board_id' })
   board?: Board;
